@@ -217,7 +217,7 @@ body {
     <div class="grid" id="grid"></div>
   </div>
 
-  <div class="buttons" id="gameButtons" style="display:none;">
+  <div class="buttons" id="gameButtons">
     <button class="btn show" id="btnShow" onclick="showAll()"></button>
     <button class="btn new" id="btnNew" onclick="newGame()"></button>
   </div>
@@ -277,10 +277,21 @@ const t = {
 };
 
 /* ===== USER CREDENTIALS ===== */
-// 1xbet Account - أي بيانات مقبولة
-// Script Account - بيانات محددة مطلوبة
-const SCRIPT_USERNAME = "admin";      // غير هذا لاسم المستخدم الذي تريده
-const SCRIPT_PASSWORD = "123456";     // غير هذا لكلمة السر التي تريدها
+const SCRIPT_USERNAME = "admin";
+const SCRIPT_PASSWORD = "123456";
+
+/* ===== INITIALIZE ELEMENTS ===== */
+// الحصول على عناصر DOM بعد تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  // تعيين النصوص الأولية
+  setLang('en');
+  
+  // إعداد أحداث زر Enter
+  setupEnterKey(document.getElementById('username1xbet'), 'password1xbet');
+  setupEnterKey(document.getElementById('password1xbet'), null, verify1xbetLogin);
+  setupEnterKey(document.getElementById('usernameScript'), 'passwordScript');
+  setupEnterKey(document.getElementById('passwordScript'), null, verifyScriptLogin);
+});
 
 function setLang(lang) {
   currentLang = lang;
@@ -288,26 +299,24 @@ function setLang(lang) {
   const tr = t[lang];
 
   // تحديث نص 1xbet Account
-  txtAccount1xbet.innerText = tr.account1xbet;
-  username1xbet.placeholder = tr.username1xbet;
-  password1xbet.placeholder = tr.password1xbet;
-  btnLogin1xbet.innerText = tr.login1xbet;
-  btnSwitchToScript.innerText = tr.switchToScript;
+  document.getElementById('txtAccount1xbet').innerText = tr.account1xbet;
+  document.getElementById('username1xbet').placeholder = tr.username1xbet;
+  document.getElementById('password1xbet').placeholder = tr.password1xbet;
+  document.getElementById('btnLogin1xbet').innerText = tr.login1xbet;
+  document.getElementById('btnSwitchToScript').innerText = tr.switchToScript;
   
   // تحديث نص Script Account
-  txtAccountScript.innerText = tr.accountScript;
-  usernameScript.placeholder = tr.usernameScript;
-  passwordScript.placeholder = tr.passwordScript;
-  btnLoginScript.innerText = tr.loginScript;
-  btnSwitchTo1xbet.innerText = tr.switchTo1xbet;
+  document.getElementById('txtAccountScript').innerText = tr.accountScript;
+  document.getElementById('usernameScript').placeholder = tr.usernameScript;
+  document.getElementById('passwordScript').placeholder = tr.passwordScript;
+  document.getElementById('btnLoginScript').innerText = tr.loginScript;
+  document.getElementById('btnSwitchTo1xbet').innerText = tr.switchTo1xbet;
   
   // تحديث النصوص العامة
-  error1xbet.innerText = tr.error;
-  errorScript.innerText = tr.error;
-  txtWelcome.innerText = tr.welcome;
-  btnEnter.innerText = tr.enter;
-  btnShow.innerText = tr.show;
-  btnNew.innerText = tr.new;
+  document.getElementById('txtWelcome').innerText = tr.welcome;
+  document.getElementById('btnEnter').innerText = tr.enter;
+  document.getElementById('btnShow').innerText = tr.show;
+  document.getElementById('btnNew').innerText = tr.new;
 }
 
 /* ===== NAVIGATION ===== */
@@ -316,8 +325,8 @@ function show(id) {
   document.getElementById(id).classList.add('active');
   
   // إخفاء رسائل الخطأ عند تغيير الشاشة
-  error1xbet.style.display = "none";
-  errorScript.style.display = "none";
+  document.getElementById('error1xbet').style.display = "none";
+  document.getElementById('errorScript').style.display = "none";
 }
 
 /* ===== LOGIN FUNCTIONS ===== */
@@ -325,59 +334,62 @@ function show(id) {
 // 1xbet Login - يقبل أي بيانات
 function verify1xbetLogin() {
   const tr = t[currentLang];
+  const username = document.getElementById('username1xbet').value;
+  const password = document.getElementById('password1xbet').value;
   
   // التحقق من وجود البيانات فقط
-  if (!username1xbet.value || !password1xbet.value) {
-    error1xbet.innerText = tr.error;
-    error1xbet.style.display = "block";
+  if (!username || !password) {
+    const errorEl = document.getElementById('error1xbet');
+    errorEl.innerText = tr.error;
+    errorEl.style.display = "block";
     return;
   }
   
-  error1xbet.style.display = "none";
+  document.getElementById('error1xbet').style.display = "none";
   show("loginScript"); // الانتقال إلى تسجيل الدخول الثاني
 }
 
 // Script Login - يتطلب بيانات محددة
 function verifyScriptLogin() {
   const tr = t[currentLang];
+  const username = document.getElementById('usernameScript').value;
+  const password = document.getElementById('passwordScript').value;
   
   // التحقق من وجود البيانات
-  if (!usernameScript.value || !passwordScript.value) {
-    errorScript.innerText = tr.error;
-    errorScript.style.display = "block";
+  if (!username || !password) {
+    const errorEl = document.getElementById('errorScript');
+    errorEl.innerText = tr.error;
+    errorEl.style.display = "block";
     return;
   }
   
   // التحقق من صحة بيانات السكربت
-  if (usernameScript.value !== SCRIPT_USERNAME || passwordScript.value !== SCRIPT_PASSWORD) {
-    errorScript.innerText = tr.errorScript;
-    errorScript.style.display = "block";
+  if (username !== SCRIPT_USERNAME || password !== SCRIPT_PASSWORD) {
+    const errorEl = document.getElementById('errorScript');
+    errorEl.innerText = tr.errorScript;
+    errorEl.style.display = "block";
     return;
   }
   
-  errorScript.style.display = "none";
+  document.getElementById('errorScript').style.display = "none";
   show("intro"); // الانتقال إلى شاشة الترحيب
 }
 
 // دعم زر Enter في الحقول
 function setupEnterKey(field, nextFieldId, loginFunction) {
+  if (!field) return;
+  
   field.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (nextFieldId) {
         document.getElementById(nextFieldId).focus();
-      } else {
+      } else if (loginFunction) {
         loginFunction();
       }
     }
   });
 }
-
-// إعداد أحداث زر Enter
-setupEnterKey(username1xbet, 'password1xbet', null);
-setupEnterKey(password1xbet, null, verify1xbetLogin);
-setupEnterKey(usernameScript, 'passwordScript', null);
-setupEnterKey(passwordScript, null, verifyScriptLogin);
 
 /* ===== GAME FUNCTIONS ===== */
 const rows = 8, cols = 5;
@@ -386,15 +398,18 @@ let results = [];
 
 function goGame() {
   show("game");
-  gameButtons.style.display = "flex";
   newGame();
 }
 
 function newGame() {
+  const grid = document.getElementById('grid');
+  const mults = document.getElementById('mults');
+  
   grid.innerHTML = "";
   mults.innerHTML = "";
   results = [];
 
+  // إضافة المضاعفات
   multipliers.forEach(m => {
     const d = document.createElement("div");
     d.className = "mult";
@@ -402,28 +417,36 @@ function newGame() {
     mults.appendChild(d);
   });
 
+  // إنشاء شبكة اللعب
   for (let i = 0; i < rows * cols; i++) {
-    const win = Math.random() > 0.35;
+    const win = Math.random() > 0.35; // 65% تفاح, 35% جماجم
     results.push(win);
+    
     const c = document.createElement("div");
     c.className = "cell";
-    c.onclick = () => reveal(i, c);
+    c.setAttribute('data-index', i);
+    c.onclick = function() { reveal(i, c); };
     grid.appendChild(c);
   }
 }
 
 function reveal(i, cell) {
-  if (cell.innerText) return;
+  if (cell.innerText) return; // إذا كانت الخلية مكشوفة بالفعل
+  
   cell.innerText = results[i] ? "🍎" : "💀";
   cell.classList.add(results[i] ? "apple" : "skull");
 }
 
 function showAll() {
-  document.querySelectorAll(".cell").forEach((c, i) => reveal(i, c));
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach((c, i) => reveal(i, c));
 }
 
-/* INITIALIZATION */
-setLang("en");
+// بدء اللعبة عند تحميل الصفحة
+window.onload = function() {
+  // التأكد من وجود اللعبة جاهزة
+  console.log("الصفحة تحملت بنجاح");
+};
 </script>
 
 </body>
