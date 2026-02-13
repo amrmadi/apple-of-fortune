@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Apple of Fortune</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #1f4f4a, #061d1c);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.lang-switch {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+}
+
+.lang-switch button {
+  margin-left: 5px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #2a7c6f;
+  color: white;
+}
+
+/* Screens */
+.screen {
+  display: none;
+  text-align: center;
+  animation: fadeIn .8s ease;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* LOGIN SCREENS */
+.login-box {
+  background: rgba(0,0,0,.45);
+  padding: 30px;
+  border-radius: 20px;
+  width: 280px;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin-bottom: 10px;
+  display: none;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: none;
+  box-sizing: border-box;
+}
+
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(#5ee36a, #1e8b2c);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.back-btn {
+  background: #444 !important;
+  margin-top: 10px;
+}
+
+/* INTRO */
+#intro h1 {
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+
+#intro button {
+  padding: 14px 40px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(#5ee36a, #1e8b2c);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* GAME */
+.game {
+  display: flex;
+  gap: 15px;
+}
+
+.multipliers {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+}
+
+.mult {
+  width: 70px;
+  padding: 8px;
+  border-radius: 20px;
+  background: rgba(0,0,0,.4);
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 60px);
+  gap: 10px;
+}
+
+.cell {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(#b06a2c, #7a3f12);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.cell.apple {
+  background: radial-gradient(circle at top, #5ee36a, #1e8b2c);
+}
+
+.cell.skull {
+  background: radial-gradient(circle at top, #ff6b6b, #7a0f0f);
+}
+
+/* Buttons */
+.buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  padding: 12px 26px;
+  border-radius: 20px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn.show { background: #444; }
+.btn.new { background: #e31937; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="lang-switch">
+  <button onclick="setLang('en')">EN</button>
+  <button onclick="setLang('ar')">AR</button>
+</div>
+
+<!-- LOGIN 1: 1XBET ACCOUNT -->
+<div id="login1xbet" class="screen active">
+  <div class="login-box">
+    <h2 id="txtAccount1xbet"></h2>
+    <div id="error1xbet" class="error"></div>
+    <input id="username1xbet" type="text" placeholder="">
+    <input id="password1xbet" type="password" placeholder="">
+    <button id="btnLogin1xbet" onclick="verify1xbetLogin()"></button>
+    <button class="back-btn" onclick="show('loginScript')" id="btnSwitchToScript"></button>
+  </div>
+</div>
+
+<!-- LOGIN 2: SCRIPT ACCOUNT -->
+<div id="loginScript" class="screen">
+  <div class="login-box">
+    <h2 id="txtAccountScript"></h2>
+    <div id="errorScript" class="error"></div>
+    <input id="usernameScript" type="text" placeholder="">
+    <input id="passwordScript" type="password" placeholder="">
+    <button id="btnLoginScript" onclick="verifyScriptLogin()"></button>
+    <button class="back-btn" onclick="show('login1xbet')" id="btnSwitchTo1xbet"></button>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="intro" class="screen">
+  <h1>🍎 Apple of Fortune</h1>
+  <p id="txtWelcome"></p>
+  <button id="btnEnter" onclick="goGame()"></button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="game">
+    <div class="multipliers" id="mults"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="buttons" id="gameButtons" style="display:none;">
+    <button class="btn show" id="btnShow" onclick="showAll()"></button>
+    <button class="btn new" id="btnNew" onclick="newGame()"></button>
+  </div>
+</div>
+
+<script>
+/* ===== LANGUAGE ===== */
+let currentLang = "en";
+
+const t = {
+  en: {
+    // 1xbet Login
+    account1xbet: "1XBET ACCOUNT",
+    username1xbet: "Username",
+    password1xbet: "Password",
+    login1xbet: "Login 1XBET",
+    switchToScript: "Go to Script Account",
+    
+    // Script Login
+    accountScript: "SCRIPT ACCOUNT",
+    usernameScript: "Enter Username",
+    passwordScript: "Enter Password",
+    loginScript: "Login Script",
+    switchTo1xbet: "Back to 1XBET Account",
+    
+    // Common
+    error: "Username and Password are required",
+    errorScript: "Invalid script credentials",
+    welcome: "Welcome to the game of risk and reward",
+    enter: "Enter Game",
+    show: "Show All",
+    new: "New Game"
+  },
+  ar: {
+    // 1xbet Login
+    account1xbet: "حساب 1XBET",
+    username1xbet: "اسم مستخدم",
+    password1xbet: "كلمة مرور",
+    login1xbet: "تسجيل 1XBET",
+    switchToScript: "الذهاب إلى حساب السكربت",
+    
+    // Script Login
+    accountScript: "حساب السكربت",
+    usernameScript: "أدخل اسم المستخدم",
+    passwordScript: "أدخل كلمة المرور",
+    loginScript: "تسجيل السكربت",
+    switchTo1xbet: "العودة إلى حساب 1XBET",
+    
+    // Common
+    error: "من فضلك أدخل اسم المستخدم وكلمة المرور",
+    errorScript: "بيانات السكربت غير صحيحة",
+    welcome: "مرحبًا بك في لعبة الحظ والمخاطرة",
+    enter: "دخول اللعبة",
+    show: "إظهار الكل",
+    new: "لعبة جديدة"
+  }
+};
+
+/* ===== USER CREDENTIALS ===== */
+// 1xbet Account - أي بيانات مقبولة
+// Script Account - بيانات محددة مطلوبة
+const SCRIPT_USERNAME = "admin";      // غير هذا لاسم المستخدم الذي تريده
+const SCRIPT_PASSWORD = "123456";     // غير هذا لكلمة السر التي تريدها
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  const tr = t[lang];
+
+  // تحديث نص 1xbet Account
+  txtAccount1xbet.innerText = tr.account1xbet;
+  username1xbet.placeholder = tr.username1xbet;
+  password1xbet.placeholder = tr.password1xbet;
+  btnLogin1xbet.innerText = tr.login1xbet;
+  btnSwitchToScript.innerText = tr.switchToScript;
+  
+  // تحديث نص Script Account
+  txtAccountScript.innerText = tr.accountScript;
+  usernameScript.placeholder = tr.usernameScript;
+  passwordScript.placeholder = tr.passwordScript;
+  btnLoginScript.innerText = tr.loginScript;
+  btnSwitchTo1xbet.innerText = tr.switchTo1xbet;
+  
+  // تحديث النصوص العامة
+  error1xbet.innerText = tr.error;
+  errorScript.innerText = tr.error;
+  txtWelcome.innerText = tr.welcome;
+  btnEnter.innerText = tr.enter;
+  btnShow.innerText = tr.show;
+  btnNew.innerText = tr.new;
+}
+
+/* ===== NAVIGATION ===== */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  
+  // إخفاء رسائل الخطأ عند تغيير الشاشة
+  error1xbet.style.display = "none";
+  errorScript.style.display = "none";
+}
+
+/* ===== LOGIN FUNCTIONS ===== */
+
+// 1xbet Login - يقبل أي بيانات
+function verify1xbetLogin() {
+  const tr = t[currentLang];
+  
+  // التحقق من وجود البيانات فقط
+  if (!username1xbet.value || !password1xbet.value) {
+    error1xbet.innerText = tr.error;
+    error1xbet.style.display = "block";
+    return;
+  }
+  
+  error1xbet.style.display = "none";
+  show("loginScript"); // الانتقال إلى تسجيل الدخول الثاني
+}
+
+// Script Login - يتطلب بيانات محددة
+function verifyScriptLogin() {
+  const tr = t[currentLang];
+  
+  // التحقق من وجود البيانات
+  if (!usernameScript.value || !passwordScript.value) {
+    errorScript.innerText = tr.error;
+    errorScript.style.display = "block";
+    return;
+  }
+  
+  // التحقق من صحة بيانات السكربت
+  if (usernameScript.value !== SCRIPT_USERNAME || passwordScript.value !== SCRIPT_PASSWORD) {
+    errorScript.innerText = tr.errorScript;
+    errorScript.style.display = "block";
+    return;
+  }
+  
+  errorScript.style.display = "none";
+  show("intro"); // الانتقال إلى شاشة الترحيب
+}
+
+// دعم زر Enter في الحقول
+function setupEnterKey(field, nextFieldId, loginFunction) {
+  field.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextFieldId) {
+        document.getElementById(nextFieldId).focus();
+      } else {
+        loginFunction();
+      }
+    }
+  });
+}
+
+// إعداد أحداث زر Enter
+setupEnterKey(username1xbet, 'password1xbet', null);
+setupEnterKey(password1xbet, null, verify1xbetLogin);
+setupEnterKey(usernameScript, 'passwordScript', null);
+setupEnterKey(passwordScript, null, verifyScriptLogin);
+
+/* ===== GAME FUNCTIONS ===== */
+const rows = 8, cols = 5;
+const multipliers = ["x1.23","x1.54","x1.93","x2.41","x4.02","x6.71","x11.18","x27.97"];
+let results = [];
+
+function goGame() {
+  show("game");
+  gameButtons.style.display = "flex";
+  newGame();
+}
+
+function newGame() {
+  grid.innerHTML = "";
+  mults.innerHTML = "";
+  results = [];
+
+  multipliers.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "mult";
+    d.innerText = m;
+    mults.appendChild(d);
+  });
+
+  for (let i = 0; i < rows * cols; i++) {
+    const win = Math.random() > 0.35;
+    results.push(win);
+    const c = document.createElement("div");
+    c.className = "cell";
+    c.onclick = () => reveal(i, c);
+    grid.appendChild(c);
+  }
+}
+
+function reveal(i, cell) {
+  if (cell.innerText) return;
+  cell.innerText = results[i] ? "🍎" : "💀";
+  cell.classList.add(results[i] ? "apple" : "skull");
+}
+
+function showAll() {
+  document.querySelectorAll(".cell").forEach((c, i) => reveal(i, c));
+}
+
+/* INITIALIZATION */
+setLang("en");
+</script>
+
+</body>
+</html>
